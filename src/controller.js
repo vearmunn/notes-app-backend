@@ -1,40 +1,41 @@
 import { nanoid } from 'nanoid';
-import notes from '../src/notes.js';
+import NoteRepositories from '../src/repositories/note-repositories.js';
+// import notes from '../src/notes.js';
 
-export const createNote = (req, res, next) => {
+export const createNote = async (req, res, next) => {
     const { title = 'untitled', tags, body } = req.body;
-    const id = nanoid(16);
-    const createdAt = new Date().toISOString();
-    const updatedAt = createdAt;
+    const note = await NoteRepositories.createNote({
+        title,
+        body,
+        tags
+    });
 
-    const newNote = { title, tags, body, id, createdAt, updatedAt };
-    notes.push(newNote);
-
-    const isSuccess = notes.filter((note) => note.id === id).length > 0;
-
-    if (isSuccess) {
-        return res.status(201).json({
-            status: 'success',
-            message: 'Catatan berhasil ditambahkan',
-            data: { noteId: id }
+    if (!note) {
+        return res.status(400).json({
+            status: 'fail',
+            message: 'Catatan gagal ditambahkan'
         });
     }
+
+
+    return response(res, 201, 'Catatan berhasil ditambahkan', note);
 };
 
-export const getNotes = (req, res) => {
+export const getNotes = async (req, res) => {
+    const notes = await NoteRepositories.getNotes();
     return res.json({
         status: 'success',
-        data: { notes }
+        notes
     });
 };
 
-export const getNoteById = (req, res) => {
+export const getNoteById = async (req, res) => {
     const { id } = req.params;
-    const note = notes.find((n) => n.id === id);
+    const note = await NoteRepositories.getNoteById(id);
     if (note) {
         return res.json({
             status: 'success',
-            data: { note }
+            note
         });
     }
     return res.status(404).json({
@@ -43,55 +44,42 @@ export const getNoteById = (req, res) => {
     });
 };
 
-export const editNoteById = (req, res) => {
+export const editNoteById = async (req, res) => {
     const { id } = req.params;
     const { title, tags, body } = req.body;
-    const updatedAt = new Date().toISOString();
-    const index = notes.findIndex((n) => n.id === id);
 
-    if (index !== -1) {
-        notes[index] = { ...notes[index], title, tags, body, updatedAt };
-        return res.json({
-            status: 'success',
-            message: 'Catatan berhasil diperbarui'
+    const note = await NoteRepositories.editNote({
+        id,
+        title,
+        body,
+        tags
+    });
+
+    if (!note) {
+        return res.status(404).json({
+            status: 'fail',
+            message: 'Catatan tidak ditemukan'
         });
     }
-    return res.status(404).json({
-        status: 'fail',
-        message: 'Gagal memperbarui catatan. Id tidak ditemukan'
+    return res.status(200).json({
+        status: 'success',
+        message: 'Catatan berhasil diperbarui'
     });
 };
 
-export const deleteNoteById = (req, res) => {
+export const deleteNoteById = async (req, res) => {
     const { id } = req.params;
-    const index = notes.findIndex((n) => n.id === id);
+    const deletedNote = await NoteRepositories.deleteNote(id);
 
-    if (index !== -1) {
-        notes.splice(index, 1);
-        return res.json({
-            status: 'success',
-            message: 'Catatan berhasil dihapus'
+    if (!deletedNote) {
+        return res.status(404).json({
+            status: 'fail',
+            message: 'Catatan gagal dihapus. Id tidak ditemukan'
         });
-    }
-    return res.status(404).json({
-        status: 'fail',
-        message: 'Catatan gagal dihapus. Id tidak ditemukan'
-    });
-};
 
-export const deletes = (req, res) => {
-    const { id } = req.params;
-    const index = notes.findIndex((n) => n.id === id);
-
-    if (index !== -1) {
-        notes.splice(index, 1);
-        return res.json({
-            status: 'success',
-            message: 'Catatan berhasil dihapus'
-        });
     }
-    return res.status(404).json({
-        status: 'fail',
-        message: 'Catatan gagal dihapus. Id tidak ditemukan'
+    return res.json({
+        status: 'success',
+        message: 'Catatan berhasil dihapus'
     });
 };

@@ -1,10 +1,11 @@
 import express from 'express';
 import routes from './routes.js';
 import cors from 'cors';
+import 'dotenv/config';
 
 const app = express();
-const port = process.env.PORT || 3000;
-const host = process.env.NODE_ENV !== 'production' ? 'localhost' : '0.0.0.0';
+const port = process.env.PORT;
+const host = process.env.HOST;
 
 app.use(cors({
     origin: '*'
